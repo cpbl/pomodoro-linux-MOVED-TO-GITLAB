@@ -8,7 +8,6 @@ Options:
   -h --help                Show this screen.
   -n --with-network           Use this to keep the network active during the tomato
   --player=<musicplayer>   Set this to banshee or rythmbox to pause music 
-                               [default: rhythmbox]
   -l LOGFILE --logfile=LOGFILE      TSV file to store list of tomato sessions 
                                [default: /home/cpbl/personal/pomodoro-log.txt]
 
@@ -22,18 +21,20 @@ Options:
  It also works with one of a couple of music players on GNU/Linux so that any music that's playing when you start is paused and continues after you've logged your session.
   
 """
-import docopt,os,sys,datetime
+import docopt,os,sys,datetime,subprocess
+import commands # Linux 
 import pandas as pd
 
 def start_session(arguments):
-    workMinutes= arguments['<minutes>']
+    workMinutes= arguments['<minutes>'] or '25'  # Implements default value for a positional argument in docopts
     LOGFILE=arguments['--logfile']
     networking=arguments['--with-network']
+    musicPlayer=arguments['--player']
     BLOCK_WEB_SITES='cp /home/local/etc/hosts-focus /etc/hosts'
     UNBLOCK_WEB_SITES='cp /home/local/etc/hosts-lax /etc/hosts'
     
-    if workMinutes is None:
-        workMinutes =25
+    #if workMinutes is None:
+    #    workMinutes =25
     workMinutes =int(workMinutes)
     os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
     os.system("""
@@ -45,36 +46,21 @@ def start_session(arguments):
     """+BLOCK_WEB_SITES+"""
 
     """)
-    musicPlayer='rhythmbox'
-    if musicPlayer=='banshee':
-        os.system("""
-    if [ "$(pidof banshee)" ]      
-       then
-          if [[ `banshee --query-current-state` == *"playing"* ]]
-            then
-                    echo "Banshee playing... sound paused.";
-                     wasMusicOn="banshee"
-                       banshee --pause
-            else
-                echo "Banshee running but not playing";
-            fi
-        else
-           echo "Banshee not running ";
-        fi
-    """)
 
-    if musicPlayer=='rhythmbox':
-        os.system("""
-    if [ "$(pidof rhythmbox)" ]      
-            then
-                    echo "Rhythmbox running ... sound paused.";
-                    wasMusicOn="rhythmbox"
-                    rhythmbox-client --pause
-        else
-           echo "Rhythmbox not running ";
-        fi
-        """)
+    # We will mute all sound. But it's nicer, if we can, to pause music where it was:
+    musicPlayers=['rhythmbox','banshee'] if musicPlayer is None else [musicPlayer]
+    musicPlayers= [mp for mp in musicPlayers if commands.getstatusoutput('echo $(pidof '+mp+')')[1]]
+    print('Found alive music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))
+    # Now eliminate those that are not actually playing (if we know how to check):
+    musicPlayers= [mp for mp in musicPlayers if (not mp=='banshee' or 'playing' in commands.getstatusoutput("banshee --query-current-state")[1])]
+    print('   Pausing playing music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))    
+    # Now pause those that we know how to pause:
+    if 'banshee' in musicPlayers:
+        os.system("banshee --pause")
+    if 'rhythmbox' in musicPlayers:
+        os.system("rhythmbox-client --pause")
 
+        
     hour=datetime.datetime.now().hour
     shdo="""
     # Regardless of pausing play, mute all sounds:
@@ -100,17 +86,29 @@ def start_session(arguments):
     # Regardless of restarting play, un-mute all sounds:
     amixer -q -D pulse sset Master unmute
     echo "Starting 5 minutes break at `date` ..."
-    if [ -n ${wasMusicOn} ]; then
-      #  
-    """+(musicPlayer=='banshee')*"""  banshee --play """+ """
-    """+(musicPlayer=='rhythmbox')*"""  rhythmbox-client --play """+ """
-      fi
+    """
+    # Now un-pause those that we believe were playing:
+    if 'banshee' in musicPlayers:
+        shdo+="banshee --play\n"
+    if 'rhythmbox' in musicPlayers and 0:
+        shdo+="rhythmbox-client --play\n"
+    shdo+="""
     sleep 300 && notify-send "Start a new work cycle!"
     echo "Finished break.   Restart me for another work cycle."
     """
     #print(shdo)
     os.system(shdo)
 
+def get_pid(process_name, contains=True):
+    """ Quasi-cross platform way to find if something is running."""
+    ffff=sorted([ss.name() for ss in psutil.process_iter()])
+    print ffff
+    fuck
+    for proc in psutil.process_iter():
+        if 'ansh' in proc.name(): print proc.name() 
+        if proc.name() == process_name or contains* (process_name.lower() in proc.name().lower()):
+            return(proc)
+    
 def analyse_log(logfile):
     df=pd.read_table(logfile, names=['start','minutes','tags'])
     foiuew
@@ -125,6 +123,8 @@ if __name__ == '__main__':
 # Docopt is a library for parsing command line arguments
     arguments = docopt.docopt(__doc__)
     workMinutes= arguments['<minutes>']
+
+    import psutil
     if workMinutes in ['analyse','analyze']:
         analyse_log(arguments['--logfile'])
     else:
