@@ -5,29 +5,61 @@ Usage:
   pomodoro [options] analyse 
 
 Options:
-  -h --help                Show this screen.
-  -n --with-network           Use this to keep the network active during the tomato
-  --player=<musicplayer>   Set this to banshee or rythmbox to pause music 
-  -l LOGFILE --logfile=LOGFILE      TSV file to store list of tomato sessions 
-                               [default: /home/cpbl/personal/pomodoro-log.txt]
+  -h --help                      Show this screen.
+  -n --with-network              Use this to keep the network active during the tomato
+  --player=<musicplayer>         Set this to banshee or rythmbox to pause music (or leave it to try both)
+  -l LOGFILE --logfile=LOGFILE   TSV file to store list of tomato sessions 
+                                   [default: ~/personal/pomodoro-log.txt]
+  -e EDITOR --editor=EDITOR      Editor to use for reporting tags [default: emacs]
 
  This is a simple, customisable "Pomodoro Method" or "Tomato method" timer for facilitating high-focus work. 
  It turns off your music and network for work periods, traditionally for 25 minutes at a time, and suggests a five minute break in between the work sessions.
  Completed sessions are logged in a flexible, text-based log so you can do whatever you want (or nothing) with them. Whenever you finish a pomodoro, you can list any relevant tags to describe your work.
 
  It runs some custom command line strings at the beginning and end of each tomato, for instance to block access to certain websites by interfering with /etc/hosts.
- With the current settings, these sites are only unblocked at the end of the tomato, if the time is not during the 09h-17h workday (I work weekends :) )
+ With the current settings, these sites are only unblocked at the end of the tomato, if the time is not during the 09h-17h workday. )
 
  It also works with one of a couple of music players on GNU/Linux so that any music that's playing when you start is paused and continues after you've logged your session.
   
 """
-import docopt,os,sys,datetime,subprocess
+__author__='cpbl but who would want to admit it?'
+import docopt,os,sys,datetime,subprocess,re
 import commands # Linux 
 import pandas as pd
+
+
+def linux_musicplayer_check_whether_playing():
+    """
+    Report which applications are currently sending sound to the mixer,
+    based on the output of the command:
+
+       pacmd list-sink-inputs
+
+    Also list those which are running/connected, but not currently sending sound.
+    Returns a dict listing applications and a boolean playing state.
+
+    This is very GNU/Linux specific! At least, it works on Ubuntu.  On other platforms, there may be direct ways for each application.
+
+    For instance, under Ubuntu, you can ask banshee:
+
+    'playing' in commands.getstatusoutput("banshee --query-current-state")[1])
+
+    but there's nothing like this for rhythmbox
+
+    """
+    outs=commands.getstatusoutput(    'pacmd list-sink-inputs')[1].split('index: ')[1:]
+    found={}
+    outs= commands.getstatusoutput("pacmd list-sink-inputs |grep -e index: -e state: -e client:")[1].split('index:')
+    for cl in outs[1:]:
+        found[ re.findall('<(.*?)>',cl.split(':')[2])[0].lower() ]  =  'RUNNING' in cl.split(':')[1]
+    return(found)
+
+
 
 def start_session(arguments):
     workMinutes= arguments['<minutes>'] or '25'  # Implements default value for a positional argument in docopts
     LOGFILE=arguments['--logfile']
+    EDITOR=arguments['--editor']
     networking=arguments['--with-network']
     musicPlayer=arguments['--player']
     BLOCK_WEB_SITES='cp /home/local/etc/hosts-focus /etc/hosts'
@@ -36,7 +68,6 @@ def start_session(arguments):
     #if workMinutes is None:
     #    workMinutes =25
     workMinutes =int(workMinutes)
-    os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
     os.system("""
     nmcli networking off
     echo "Networking off."
@@ -51,8 +82,8 @@ def start_session(arguments):
     musicPlayers=['rhythmbox','banshee'] if musicPlayer is None else [musicPlayer]
     musicPlayers= [mp for mp in musicPlayers if commands.getstatusoutput('echo $(pidof '+mp+')')[1]]
     print('Found alive music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))
-    # Now eliminate those that are not actually playing (if we know how to check):
-    musicPlayers= [mp for mp in musicPlayers if (not mp=='banshee' or 'playing' in commands.getstatusoutput("banshee --query-current-state")[1])]
+    # Now eliminate those that are not actually playing (ie sending sound to the mixer):
+    musicPlayers= [mp for mp in musicPlayers if linux_musicplayer_check_whether_playing().get(mp)]
     print('   Pausing playing music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))    
     # Now pause those that we know how to pause:
     if 'banshee' in musicPlayers:
@@ -61,7 +92,9 @@ def start_session(arguments):
         os.system("rhythmbox-client --pause")
 
         
+    os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
     hour=datetime.datetime.now().hour
+    weekend=datetime.datetime.weekday(datetime.datetime.now())>4
     shdo="""
     # Regardless of pausing play, mute all sounds:
     amixer -q -D pulse sset Master mute
@@ -73,12 +106,12 @@ def start_session(arguments):
     """+         """
 
     H=$(date +%H)
-    """+ (hour<9 or hour>=17)*UNBLOCK_WEB_SITES +"""
+    """+ (hour<9 or hour>=17 or weekend )*UNBLOCK_WEB_SITES +"""
 
     # In-place edit: add a line to the beginning of the file
     sed -i -e "1i`date`	"""+str(workMinutes)+"""	"'\' """+LOGFILE+"""
-    echo "Enter any tags and quit emacs..."
-    emacs """+LOGFILE+"""
+    echo "Enter any tags and quit """+EDITOR+"""..."
+     """+EDITOR+" "+LOGFILE+"""
     # Add a newline, and remove any double new lines:
     echo >> """+LOGFILE+"""
     # In-place edit: remove double newlines
@@ -90,7 +123,7 @@ def start_session(arguments):
     # Now un-pause those that we believe were playing:
     if 'banshee' in musicPlayers:
         shdo+="banshee --play\n"
-    if 'rhythmbox' in musicPlayers and 0:
+    if 'rhythmbox' in musicPlayers:
         shdo+="rhythmbox-client --play\n"
     shdo+="""
     sleep 300 && notify-send "Start a new work cycle!"
