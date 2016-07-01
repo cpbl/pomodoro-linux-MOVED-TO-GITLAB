@@ -1,0 +1,133 @@
+#!/usr/bin/python
+"""
+Usage:
+  pomodoro [options] [<minutes>]
+  pomodoro [options] analyse 
+
+Options:
+  -h --help                Show this screen.
+  -n --with-network           Use this to keep the network active during the tomato
+  --player=<musicplayer>   Set this to banshee or rythmbox to pause music 
+                               [default: rhythmbox]
+  -l LOGFILE --logfile=LOGFILE      TSV file to store list of tomato sessions 
+                               [default: /home/cpbl/personal/pomodoro-log.txt]
+
+ This is a simple, customisable "Pomodoro Method" or "Tomato method" timer for facilitating high-focus work. 
+ It turns off your music and network for work periods, traditionally for 25 minutes at a time, and suggests a five minute break in between the work sessions.
+ Completed sessions are logged in a flexible, text-based log so you can do whatever you want (or nothing) with them. Whenever you finish a pomodoro, you can list any relevant tags to describe your work.
+
+ It runs some custom command line strings at the beginning and end of each tomato, for instance to block access to certain websites by interfering with /etc/hosts.
+ With the current settings, these sites are only unblocked at the end of the tomato, if the time is not during the 09h-17h workday (I work weekends :) )
+
+ It also works with one of a couple of music players on GNU/Linux so that any music that's playing when you start is paused and continues after you've logged your session.
+  
+"""
+import docopt,os,sys,datetime
+import pandas as pd
+
+def start_session(arguments):
+    workMinutes= arguments['<minutes>']
+    LOGFILE=arguments['--logfile']
+    networking=arguments['--with-network']
+    BLOCK_WEB_SITES='cp /home/local/etc/hosts-focus /etc/hosts'
+    UNBLOCK_WEB_SITES='cp /home/local/etc/hosts-lax /etc/hosts'
+    
+    if workMinutes is None:
+        workMinutes =25
+    workMinutes =int(workMinutes)
+    os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
+    os.system("""
+    nmcli networking off
+    echo "Networking off."
+    """*(not networking)+"""
+    notify-send "Starting Pomodoro for $workMinutes minutes at `date`.   Networking """+{True:'left on',False:'off'}[networking]+"""."
+
+    """+BLOCK_WEB_SITES+"""
+
+    """)
+    musicPlayer='rhythmbox'
+    if musicPlayer=='banshee':
+        os.system("""
+    if [ "$(pidof banshee)" ]      
+       then
+          if [[ `banshee --query-current-state` == *"playing"* ]]
+            then
+                    echo "Banshee playing... sound paused.";
+                     wasMusicOn="banshee"
+                       banshee --pause
+            else
+                echo "Banshee running but not playing";
+            fi
+        else
+           echo "Banshee not running ";
+        fi
+    """)
+
+    if musicPlayer=='rhythmbox':
+        os.system("""
+    if [ "$(pidof rhythmbox)" ]      
+            then
+                    echo "Rhythmbox running ... sound paused.";
+                    wasMusicOn="rhythmbox"
+                    rhythmbox-client --pause
+        else
+           echo "Rhythmbox not running ";
+        fi
+        """)
+
+    hour=datetime.datetime.now().hour
+    shdo="""
+    # Regardless of pausing play, mute all sounds:
+    amixer -q -D pulse sset Master mute
+    sleep $((60*"""+str(workMinutes)+"""))
+    notify-send "Break!"
+    """+ (not networking)* """ 
+    nmcli networking on 
+    echo "      Networking on!"
+    """+         """
+
+    H=$(date +%H)
+    """+ (hour<9 or hour>=17)*UNBLOCK_WEB_SITES +"""
+
+    # In-place edit: add a line to the beginning of the file
+    sed -i -e "1i`date`	"""+str(workMinutes)+"""	"'\' """+LOGFILE+"""
+    echo "Enter any tags and quit emacs..."
+    emacs """+LOGFILE+"""
+    # Add a newline, and remove any double new lines:
+    echo >> """+LOGFILE+"""
+    # In-place edit: remove double newlines
+    sed -i '/^[ \t]*$/d' """+LOGFILE+""" 
+    # Regardless of restarting play, un-mute all sounds:
+    amixer -q -D pulse sset Master unmute
+    echo "Starting 5 minutes break at `date` ..."
+    if [ -n ${wasMusicOn} ]; then
+      #  
+    """+(musicPlayer=='banshee')*"""  banshee --play """+ """
+    """+(musicPlayer=='rhythmbox')*"""  rhythmbox-client --play """+ """
+      fi
+    sleep 300 && notify-send "Start a new work cycle!"
+    echo "Finished break.   Restart me for another work cycle."
+    """
+    #print(shdo)
+    os.system(shdo)
+
+def analyse_log(logfile):
+    df=pd.read_table(logfile, names=['start','minutes','tags'])
+    foiuew
+
+################################################################################################
+################################################################################################
+################################################################################################
+if __name__ == '__main__':
+################################################################################################
+################################################################################################
+################################################################################################
+# Docopt is a library for parsing command line arguments
+    arguments = docopt.docopt(__doc__)
+    workMinutes= arguments['<minutes>']
+    if workMinutes in ['analyse','analyze']:
+        analyse_log(arguments['--logfile'])
+    else:
+        start_session(arguments)
+    pass
+
