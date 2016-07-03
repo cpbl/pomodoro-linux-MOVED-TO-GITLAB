@@ -20,13 +20,28 @@ Options:
  With the current settings, these sites are only unblocked at the end of the tomato, if the time is not during the 09h-17h workday. )
 
  It also works with one of a couple of music players on GNU/Linux so that any music that's playing when you start is paused and continues after you've logged your session.
-  
+
+ Here's example output (There are also GUI notifications through the DE):
+
+Found alive music player(s): ['rhythmbox', 'banshee']
+   Pausing playing music player(s): ['rhythmbox']
+Starting Pomodoro for 25 minutes at Fri Jul  1 17:42:42 EDT 2016 ...
+Enter any tags and quit emacs...
+Starting 5 minutes break at Fri Jul  1 18:08:12 EDT 2016 ...
+Finished break.   Restart me for another work cycle.
+
 """
 __author__='cpbl but who would want to admit it?'
 import docopt,os,sys,datetime,subprocess,re
 import commands # Linux 
 import pandas as pd
 
+musicPlayerKnowhow=dict(
+    banshee=dict(pause='banshee --pause',
+                 resume='banshee --play'),
+    rhythmbox=dict(pause='rhythmbox-client --pause',
+                   resume='rhythmbox-client --play')
+    )
 
 def linux_musicplayer_check_whether_playing():
     """
@@ -84,12 +99,12 @@ def start_session(arguments):
     print('Found alive music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))
     # Now eliminate those that are not actually playing (ie sending sound to the mixer):
     musicPlayers= [mp for mp in musicPlayers if linux_musicplayer_check_whether_playing().get(mp)]
-    print('   Pausing playing music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))    
+    print('   Currently playing music player(s): '+(str(musicPlayers) if musicPlayers else 'None'))    
     # Now pause those that we know how to pause:
-    if 'banshee' in musicPlayers:
-        os.system("banshee --pause")
-    if 'rhythmbox' in musicPlayers:
-        os.system("rhythmbox-client --pause")
+    for mp in musicPlayers:
+        if mp in musicPlayerKnowhow:
+            print('   Pausing '+mp+'.')
+            os.system(musicPlayerKnowhow[mp]['pause'])
 
         
     os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
@@ -121,10 +136,11 @@ def start_session(arguments):
     echo "Starting 5 minutes break at `date` ..."
     """
     # Now un-pause those that we believe were playing:
-    if 'banshee' in musicPlayers:
-        shdo+="banshee --play\n"
-    if 'rhythmbox' in musicPlayers:
-        shdo+="rhythmbox-client --play\n"
+    for mp in musicPlayers:
+        if mp in musicPlayerKnowhow:
+            shdo+='echo "  Resuming '+mp+'"\n'
+            shdo+=musicPlayerKnowhow[mp]['resume']
+
     shdo+="""
     sleep 300 && notify-send "Start a new work cycle!"
     echo "Finished break.   Restart me for another work cycle."
