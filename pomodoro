@@ -30,6 +30,8 @@ Enter any tags and quit emacs...
 Starting 5 minutes break at Fri Jul  1 18:08:12 EDT 2016 ...
 Finished break.   Restart me for another work cycle.
 
+Dependencies: python-docopt, python-pandas, banshee, rhythmbox
+
 """
 __author__='cpbl but who would want to admit it?'
 import docopt,os,sys,datetime,subprocess,re
@@ -77,8 +79,10 @@ def start_session(arguments):
     EDITOR=arguments['--editor']
     networking=arguments['--with-network']
     musicPlayer=arguments['--player']
-    BLOCK_WEB_SITES='cp /home/local/etc/hosts-focus /etc/hosts'
-    UNBLOCK_WEB_SITES='cp /home/local/etc/hosts-lax /etc/hosts'
+    BLOCK_WEB_SITES,  UNBLOCK_WEB_SITES='',''
+    if os.path.exists('/home/local/etc/hosts-focus'):
+        BLOCK_WEB_SITES='cp /home/local/etc/hosts-focus /etc/hosts'
+        UNBLOCK_WEB_SITES='cp /home/local/etc/hosts-lax /etc/hosts'
     
     #if workMinutes is None:
     #    workMinutes =25
