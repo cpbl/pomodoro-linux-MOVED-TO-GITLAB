@@ -9,7 +9,7 @@ Options:
   -n --with-network              Use this to keep the network active during the tomato
   --player=<musicplayer>         Set this to banshee or rythmbox to pause music (or leave it to try both)
   -l LOGFILE --logfile=LOGFILE   TSV file to store list of tomato sessions 
-                                   [default: ~/personal/pomodoro-log.txt]
+                                   [default: ~/pomodoro-log.txt]
   -e EDITOR --editor=EDITOR      Editor to use for reporting tags [default: emacs]
 
  This is a simple, customisable "Pomodoro Method" or "Tomato method" timer for facilitating high-focus work. 
@@ -31,7 +31,6 @@ Starting 5 minutes break at Fri Jul  1 18:08:12 EDT 2016 ...
 Finished break.   Restart me for another work cycle.
 
 Dependencies (Ubuntu package names): python-docopt, python-pandas,  notify-osd, banshee, rhythmbox
-Also, unless you specify -l, you should ensure that ~/personal/pomodoro-log.txt exists
 
 """
 __author__='cpbl but who would want to admit it?'
@@ -111,7 +110,7 @@ def start_session(arguments):
             print('   Pausing '+mp+'.')
             os.system(musicPlayerKnowhow[mp]['pause'])
 
-        
+    os.system('touch '+LOGFILE) # Ensure that it exists
     os.system('echo "Starting Pomodoro for '+str(workMinutes)+' minutes at `date` ..."')
     hour=datetime.datetime.now().hour
     weekend=datetime.datetime.weekday(datetime.datetime.now())>4
