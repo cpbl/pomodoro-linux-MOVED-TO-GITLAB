@@ -43,7 +43,7 @@ musicPlayerKnowhow=dict(
                  resume='banshee --play'),
     rhythmbox=dict(pause='rhythmbox-client --pause',
                    resume='rhythmbox-client --play')
- table 10 ta table )
+    )
 
 def linux_musicplayer_check_whether_playing():
     """
