@@ -30,7 +30,8 @@ Enter any tags and quit emacs...
 Starting 5 minutes break at Fri Jul  1 18:08:12 EDT 2016 ...
 Finished break.   Restart me for another work cycle.
 
-Dependencies: python-docopt, python-pandas, banshee, rhythmbox
+Dependencies (Ubuntu package names): python-docopt, python-pandas,  notify-osd, banshee, rhythmbox
+Also, unless you specify -l, you should ensure that ~/personal/pomodoro-log.txt exists
 
 """
 __author__='cpbl but who would want to admit it?'
@@ -43,7 +44,7 @@ musicPlayerKnowhow=dict(
                  resume='banshee --play'),
     rhythmbox=dict(pause='rhythmbox-client --pause',
                    resume='rhythmbox-client --play')
-    )
+ table 10 ta table )
 
 def linux_musicplayer_check_whether_playing():
     """
