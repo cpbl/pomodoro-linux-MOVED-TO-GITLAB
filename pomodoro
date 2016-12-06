@@ -167,6 +167,10 @@ def get_pid(process_name, contains=True):
     
 def analyse_log(logfile):
     df=pd.read_table(logfile, names=['start','minutes','tags'])
+
+    foo
+
+    # Plot some word clouds:
     tags= df.tags.str.split(',').sum()
     from wordcloud import WordCloud
     wordcloud = WordCloud().generate('. '.join(tags))
@@ -193,7 +197,6 @@ if __name__ == '__main__':
 # Docopt is a library for parsing command line arguments
     arguments = docopt.docopt(__doc__)
     workMinutes= arguments['<minutes>']
-    wtf
     import psutil
     print('         Use "pomodoro -h" for usage info / help')
     if workMinutes in ['analyse','analyze'] or workMinutes['analyse'] or workMinutes['analyse']:
