@@ -40,6 +40,7 @@ __author__='cpbl but who would want to admit it?'
 import docopt,os,sys,datetime,subprocess,re
 import commands # Linux 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 musicPlayerKnowhow=dict(
     banshee=dict(pause='banshee --pause',
@@ -167,14 +168,37 @@ def get_pid(process_name, contains=True):
     
 def analyse_log(logfile):
     df=pd.read_table(logfile, names=['start','minutes','tags'])
-
-    foo
-
-    # Plot some word clouds:
     tags= df.tags.str.split(',').sum()
+
+    # Frequency of tags
+    import collections
+    counter=collections.Counter(tags)
+    print(' Most frequently tagged: ')
+    print('\n'.join(['%30s:\t%d'%(a,b) for a,b in counter.most_common(45)]))
+
+    # Work over time: (minutes per day)
+    df['dt']=pd.to_datetime(df.start)
+    """
+    df.dt.dt.month
+    df.dt.dt.year
+    dt.snap #??
+    """
+    df['day'] = df.dt.dt.round('d')
+    byday=df.groupby('day')['minutes'].sum()
+    byday.plot()
+    plt.ylabel('Minutes')
+    plt.show()
+
+    if 0:
+        bymonth=df.groupby('day')['minutes'].sum()
+        bymonth.plot()
+        plt.ylabel('Minutes')
+        plt.show()
+    
+    # Plot some word clouds:
     from wordcloud import WordCloud
     wordcloud = WordCloud().generate('. '.join(tags))
-    import matplotlib.pyplot as plt
+    plt.figure()    
     plt.imshow(wordcloud)
     plt.axis("off")
     plt.show()
