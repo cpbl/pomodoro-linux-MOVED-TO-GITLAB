@@ -3,6 +3,7 @@
 Usage:
   pomodoro [options] [<minutes>]
   pomodoro [options] analyse 
+  pomodoro [options] analyze
 
 Options:
   -h --help                      Show this screen.
@@ -21,6 +22,8 @@ Options:
 
  It also works with one of a couple of music players on GNU/Linux so that any music that's playing when you start is paused and continues after you've logged your session.
 
+The "analyse" mode makes wordclouds, statistics, time plots...
+
  Here's example output (There are also GUI notifications through the DE):
 
 Found alive music player(s): ['rhythmbox', 'banshee']
@@ -30,8 +33,8 @@ Enter any tags and quit emacs...
 Starting 5 minutes break at Fri Jul  1 18:08:12 EDT 2016 ...
 Finished break.   Restart me for another work cycle.
 
-Dependencies (Ubuntu package names): python-docopt, python-pandas,  notify-osd, banshee, rhythmbox
-
+Dependencies (Ubuntu package names): python-docopt, python-pandas,  notify-osd, banshee, rhythmbox, 
+Dependencies (pip names, e.g. use "pip install --user --upgrade wordcloud"):  wordcloud
 """
 __author__='cpbl but who would want to admit it?'
 import docopt,os,sys,datetime,subprocess,re
@@ -190,10 +193,10 @@ if __name__ == '__main__':
 # Docopt is a library for parsing command line arguments
     arguments = docopt.docopt(__doc__)
     workMinutes= arguments['<minutes>']
-
+    wtf
     import psutil
     print('         Use "pomodoro -h" for usage info / help')
-    if workMinutes in ['analyse','analyze']:
+    if workMinutes in ['analyse','analyze'] or workMinutes['analyse'] or workMinutes['analyse']:
         analyse_log(arguments['--logfile'])
     else:
         start_session(arguments)
