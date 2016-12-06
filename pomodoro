@@ -164,7 +164,21 @@ def get_pid(process_name, contains=True):
     
 def analyse_log(logfile):
     df=pd.read_table(logfile, names=['start','minutes','tags'])
-    foiuew
+    tags= df.tags.str.split(',').sum()
+    from wordcloud import WordCloud
+    wordcloud = WordCloud().generate('. '.join(tags))
+    import matplotlib.pyplot as plt
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.show()
+
+    # lower max_font_size
+    wordcloud = WordCloud(max_font_size=40).generate('. '.join(tags))
+    plt.figure()
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.show()
+
 
 ################################################################################################
 ################################################################################################
@@ -178,6 +192,7 @@ if __name__ == '__main__':
     workMinutes= arguments['<minutes>']
 
     import psutil
+    print('         Use "pomodoro -h" for usage info / help')
     if workMinutes in ['analyse','analyze']:
         analyse_log(arguments['--logfile'])
     else:
