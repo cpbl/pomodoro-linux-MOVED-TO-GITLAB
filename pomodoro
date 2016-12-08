@@ -223,7 +223,7 @@ if __name__ == '__main__':
     workMinutes= arguments['<minutes>']
     import psutil
     print('         Use "pomodoro -h" for usage info / help')
-    if workMinutes in ['analyse','analyze'] or workMinutes['analyse'] or workMinutes['analyse']:
+    if workMinutes in ['analyse','analyze'] or arguments['analyse'] or arguments['analyze']:
         analyse_log(arguments['--logfile'])
     else:
         start_session(arguments)
