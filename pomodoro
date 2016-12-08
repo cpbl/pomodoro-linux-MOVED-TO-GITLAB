@@ -168,7 +168,7 @@ def get_pid(process_name, contains=True):
     
 def analyse_log(logfile):
     df=pd.read_table(logfile, names=['start','minutes','tags'])
-    tags= df.tags.str.split(',').sum()
+    tags=[ss.strip() for ss in  df.tags.str.split(',').sum()]
 
     # Frequency of tags
     import collections
@@ -183,11 +183,56 @@ def analyse_log(logfile):
     df.dt.dt.year
     dt.snap #??
     """
-    df['day'] = df.dt.dt.round('d')
-    byday=df.groupby('day')['minutes'].sum()
-    byday.plot()
-    plt.ylabel('Minutes')
-    plt.show()
+    if 0:
+        # Day resolution?
+        df['day'] = df.dt.dt.round('d')
+        byday=df.groupby('day')['minutes'].sum()
+        byday.plot()
+        plt.ylabel('Minutes')
+        plt.show()
+
+
+        def roundTime(dt=None, dateDelta=datetime.timedelta(minutes=1)):
+            """Round a datetime object to a multiple of a timedelta
+            dt : datetime.datetime object, default now.
+            dateDelta : timedelta object, we round to a multiple of this, default 1 minute.
+            Author: Thierry Husson 2012 - Use it as you want but don't blame me.
+                    Stijn Nevens 2014 - Changed to use only datetime objects as variables
+            """
+            roundTo = dateDelta.total_seconds()
+
+            if dt == None : dt = datetime.datetime.now()
+            ever=dt-dt.min
+            seconds = ever.seconds
+            foo
+            # // is a floor division, not a comment on following line:
+            rounding = (seconds+roundTo/2) // roundTo * roundTo
+            return dt + datetime.timedelta(0,rounding-seconds,-dt.microsecond)
+        def roundTime(tm, freq):
+            if freq == 'month':
+                nt = datetime.datetime(year=tm.year, month=tm.month, day=1)
+            elif freq == 'day':
+                nt = datetime.datetime(year=tm.year, month=tm.month, day=tm.day)
+            else:
+                not_done_yet
+            return nt
+
+        plt.figure()
+        df['month']=df.dt.map(lambda tt: roundTime(tt,'month'))
+        bymonth=df.groupby('month')['minutes'].sum()
+        bymonth.plot(kind='bar')
+        plt.ylabel('minutes')
+        plt.show()
+
+
+        ax=plt.twinx()
+        df['day']=df.dt.map(lambda tt: roundTime(tt,'day'))
+        byday=df.groupby('day')['minutes'].sum()
+        byday.plot(kind='bar', ax=ax)
+        plt.ylabel('minutes')
+        plt.show()
+
+    
 
     if 0:
         bymonth=df.groupby('day')['minutes'].sum()
