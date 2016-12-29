@@ -10,7 +10,7 @@ Options:
   -n --with-network              Use this to keep the network active during the tomato
   --player=<musicplayer>         Set this to banshee or rythmbox to pause music (or leave it to try both)
   -l LOGFILE --logfile=LOGFILE   TSV file to store list of tomato sessions 
-                                   [default: ~/pomodoro-log.txt]
+                                   [default: ~/.pomodoro-log.txt]
   -e EDITOR --editor=EDITOR      Editor to use for reporting tags [default: emacs]
 
  This is a simple, customisable "Pomodoro Method" or "Tomato method" timer for facilitating high-focus work. 
