@@ -173,8 +173,8 @@ def analyse_log(logfile):
     # Frequency of tags
     import collections
     counter=collections.Counter(tags)
-    print(' Most frequently tagged: ')
-    print('\n'.join(['%30s:\t%d'%(a,b) for a,b in counter.most_common(45)]))
+    print(' Most frequently tagged (top 10): ')
+    print('\n'.join(['%30s:\t%d'%(a,b) for a,b in counter.most_common(10)]))
 
     # Work over time: (minutes per day)
     df['dt']=pd.to_datetime(df.start)
@@ -183,12 +183,18 @@ def analyse_log(logfile):
     df.dt.dt.year
     dt.snap #??
     """
-    if 0:
+
+    if 1:
         # Day resolution?
+        #plt.figure()
         df['day'] = df.dt.dt.round('d')
         byday=df.groupby('day')['minutes'].sum()
+        byday=pd.DataFrame(byday).sort_values('minutes', ascending=False)
+        print(' Top 10 days:')
+        print byday[:10]
         byday.plot()
         plt.ylabel('Minutes')
+        plt.title('Daily activity')
         plt.show()
 
 
@@ -216,23 +222,30 @@ def analyse_log(logfile):
             else:
                 not_done_yet
             return nt
-
+    if 0:
+        foo
         plt.figure()
+        axday=plt.gca()
+        axm=plt.twinx()
+        plt.figure()
+        axday=plt.gca()
+        
         df['month']=df.dt.map(lambda tt: roundTime(tt,'month'))
         bymonth=df.groupby('month')['minutes'].sum()
-        bymonth.plot(kind='bar')
+        bymonth.plot(kind='bar', ax=axm)
         plt.ylabel('minutes')
+        plt.title('Monthly activity')
         plt.show()
 
-
-        ax=plt.twinx()
         df['day']=df.dt.map(lambda tt: roundTime(tt,'day'))
         byday=df.groupby('day')['minutes'].sum()
-        byday.plot(kind='bar', ax=ax)
+        byday.plot(kind='bar', ax=axday)
         plt.ylabel('minutes')
+        #axday.set_xticks([])
+        plt.title('Daily activity')
         plt.show()
 
-    
+
 
     if 0:
         bymonth=df.groupby('day')['minutes'].sum()
