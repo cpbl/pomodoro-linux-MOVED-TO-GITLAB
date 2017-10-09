@@ -3,3 +3,20 @@
  Lastly, you can "analyze" your log of work and generate a word cloud of your tags, or a plot of your logged minutes over time.
  
 See wiki for screenshots.
+
+
+
+$ pomodoro -h
+Usage:
+  pomodoro [options] [<minutes>]
+  pomodoro [options] analyse 
+  pomodoro [options] analyze
+
+Options:
+  -h --help                      Show this screen.
+  -n --with-network              Use this to keep the network active during the tomato
+  --player=<musicplayer>         Set this to banshee or rythmbox to pause music (or leave it to try both)
+  -l LOGFILE --logfile=LOGFILE   TSV file to store list of tomato sessions 
+                                   [default: ~/.pomodoro-log.txt]
+  -e EDITOR --editor=EDITOR      Editor to use for reporting tags [default: emacs]
+
