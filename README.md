@@ -5,7 +5,7 @@
 See wiki for screenshots.
 
 
-
+```
 $ pomodoro -h
 Usage:
   pomodoro [options] [<minutes>]
@@ -19,4 +19,5 @@ Options:
   -l LOGFILE --logfile=LOGFILE   TSV file to store list of tomato sessions 
                                    [default: ~/.pomodoro-log.txt]
   -e EDITOR --editor=EDITOR      Editor to use for reporting tags [default: emacs]
+```
 
