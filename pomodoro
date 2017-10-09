@@ -90,7 +90,10 @@ def start_session(arguments):
     
     #if workMinutes is None:
     #    workMinutes =25
-    workMinutes =int(workMinutes)
+    try:
+        workMinutes =int(workMinutes)
+    except ValueError:
+        raise Exception('  Pomodoro: Invalid duration in minutes given. See pomodoro -h for options')
     os.system("""
     nmcli networking off
     echo "Networking off."
@@ -167,6 +170,7 @@ def get_pid(process_name, contains=True):
             return(proc)
     
 def analyse_log(logfile):
+    from wordcloud import WordCloud
     df=pd.read_table(logfile, names=['start','minutes','tags'])
     tags=[ss.strip() for ss in  df.tags.str.split(',').sum()]
 
@@ -187,6 +191,7 @@ def analyse_log(logfile):
     if 1:
         # Day resolution?
         #plt.figure()
+        # Aleksa reports that datetime.round is not in her old version (of pandas??)
         df['day'] = df.dt.dt.round('d')
         byday=df.groupby('day')['minutes'].sum()
         byday=pd.DataFrame(byday).sort_values('minutes', ascending=False)
@@ -252,20 +257,24 @@ def analyse_log(logfile):
         bymonth.plot()
         plt.ylabel('Minutes')
         plt.show()
-    
+
+    from os.path import expanduser
+    home = expanduser("~")
+
     # Plot some word clouds:
-    from wordcloud import WordCloud
-    wordcloud = WordCloud().generate('. '.join(tags))
+    wordcloud = WordCloud( width=1000, height=500).generate('. '.join(tags))
     plt.figure()    
     plt.imshow(wordcloud)
     plt.axis("off")
+    plt.savefig(home+'/tmp/'+'pomodoro_wordcloud1.png')
     plt.show()
 
     # lower max_font_size
-    wordcloud = WordCloud(max_font_size=40).generate('. '.join(tags))
-    plt.figure()
+    wordcloud = WordCloud(max_font_size=100, width=1000, height=500).generate('. '.join(tags))
+    plt.figure(figsize=[15,10])
     plt.imshow(wordcloud)
     plt.axis("off")
+    plt.savefig(home+'/tmp/'+'pomodoro_wordcloud2.png')
     plt.show()
 
 
