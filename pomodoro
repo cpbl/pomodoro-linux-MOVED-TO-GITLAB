@@ -193,15 +193,28 @@ def analyse_log(logfile):
         #plt.figure()
         # Aleksa reports that datetime.round is not in her old version (of pandas??)
         df['day'] = df.dt.dt.round('d')
+        df['week'] = df.dt.dt.round('7d')
+        df['month'] = df.dt.dt.round('30d')
         byday=df.groupby('day')['minutes'].sum()
         byday=pd.DataFrame(byday).sort_values('minutes', ascending=False)
+        #byweek=df.groupby('week')['minutes'].sum()*1.0/7 # Minutes per day
+        #byweek=pd.DataFrame(byweek).sort_values('minutes', ascending=False)
+        #bymonth=df.groupby(df.dt.dt.month)['minutes'].sum()*1.0/60.0 # Hours, total
+        #bymonth=pd.DataFrame(bymonth).sort_values('minutes', ascending=False)
+
+        # To do: this looks better, can make bars: https://stackoverflow.com/questions/43682672/plot-pandas-dataframe-against-month
+        # Or, make github activity plot!: https://stackoverflow.com/questions/24163313/how-to-create-an-activity-plot-from-pandas-dataframe-like-the-github-contributi
+        
         print(' Top 10 days:')
         print byday[:10]
-        byday.plot()
-        plt.ylabel('Minutes')
-        plt.title('Daily activity')
+        fig,axs = plt.subplots(3)
+        byday.plot(style='.', ax=axs[0])
+        df.groupby([df.dt.dt.year,df.dt.dt.week])['minutes'].sum().plot(ax=axs[1])
+        df.groupby([df.dt.dt.year,df.dt.dt.month])['minutes'].sum().plot(ax=axs[2])
+        #byweek.plot(ax=ax, label = 'week')
+        axs[0].set_ylabel('Minutes')
+        axs[0].set_title('Daily, weekly, monthly activity')
         plt.show()
-
 
         def roundTime(dt=None, dateDelta=datetime.timedelta(minutes=1)):
             """Round a datetime object to a multiple of a timedelta
